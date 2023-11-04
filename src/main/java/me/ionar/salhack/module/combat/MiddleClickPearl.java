@@ -10,6 +10,7 @@ import me.ionar.salhack.module.misc.MiddleClickFriends;
 import me.ionar.salhack.util.ChatUtils;
 import me.ionar.salhack.util.entity.ItemUtil;
 import net.minecraft.client.Mouse;
+import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.EnderPearlItem;
 import net.minecraft.item.ItemStack;
@@ -28,11 +29,13 @@ public class MiddleClickPearl extends Module {
     private void onMousePress(MouseButtonEvent event) {
         if (mc.world != null) {
             if (event.getAction() == 0 || event.getButton() != GLFW_MOUSE_BUTTON_MIDDLE) return;
-            if (findPearlInHotbar() != -1) {
+            int pearlSlot = findPearlInHotbar();
+            if (pearlSlot != -1) {
                 final int oldSlot = mc.player.getInventory().selectedSlot;
                 mc.player.getInventory().selectedSlot = findPearlInHotbar();
-                mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
-                mc.player.getInventory().selectedSlot = oldSlot;
+                mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(pearlSlot));
+                mc.player.networkHandler.sendPacket(new PlayerInteractItemC2SPacket(Hand.MAIN_HAND, 0));
+                mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(oldSlot));
             } else ChatUtils.errorMessage("No Ender Pearls found in Hotbar!");
         }
     }
